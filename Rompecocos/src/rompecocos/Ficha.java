@@ -1,6 +1,8 @@
 package rompecocos;
 
+import java.awt.Color;
 import java.awt.Dimension;
+import java.awt.event.ActionListener;
 
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
@@ -20,8 +22,11 @@ public class Ficha extends JButton {
 		this.col = col;
 		setImage(image, idImage);
 		
+		this.setBackground(Color.WHITE);
 		Dimension size = new Dimension(fichaSize, fichaSize);
 		this.setPreferredSize(size);
+		this.setBorder(null);
+		this.setFocusPainted(false);
 	
 	}
 	
@@ -75,5 +80,7 @@ public class Ficha extends JButton {
 		}
 		return false;
 	}
+
+	
 	
 }

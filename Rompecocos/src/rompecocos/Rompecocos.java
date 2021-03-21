@@ -3,13 +3,19 @@ package rompecocos;
 import misComponentes.Titulos;
 import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+import java.util.Random;
 
 import javax.imageio.ImageIO;
+import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
@@ -25,7 +31,9 @@ public class Rompecocos extends JFrame {
 	private Ficha[][] tablero = new Ficha [gridSize][gridSize];
 	private JPanel centralPanel, panelBotones;
 	private JButton ayuda, revolver, salir;
-	ActionListener escucha;
+	private Escuchas escucha;
+	private JFrame miMisma = this;
+	private Ayuda ventanaAyuda = new Ayuda(miMisma); 
 	
 	public Rompecocos() {
 		try {
@@ -84,13 +92,105 @@ public class Rompecocos extends JFrame {
 	
 	
 	private void dividirImage() {
+		centralPanel = new JPanel();
+		centralPanel.setLayout(new GridLayout(gridSize, gridSize));
+		this.add(centralPanel, BorderLayout.CENTER);
 		
+		int id = 0;
+		
+		for(int row = 0; row < gridSize; row++) {
+			for(int col = 0; col < gridSize; col++) {
+				//Calcular la porción de la image y el idImage para crear el objeto Ficha
+				int x = col * fichaSize;
+				int y = row * fichaSize;
+				BufferedImage subImage = bufferImage.getSubimage(x, y, fichaSize, fichaSize);
+				ImageIcon buttonImage = new ImageIcon(subImage);
+				tablero [row][col] = new Ficha(buttonImage, id, row, col);
+				tablero [row][col].addMouseListener((MouseListener) escucha);
+				centralPanel.add(tablero [row][col]);
+				id ++;
+			}
+		}
+		revolverFichas();
 	}
 	
 	
 	
+	private void clickedFicha(Ficha fichaClick) {
+		int row = fichaClick.getRow();
+		int col = fichaClick.getCol();
+		
+		if (row > 0  && tablero[row - 1][col].hasNoImage()) {
+			fichaClick.intercambiar(tablero[row - 1][col]);
+		} else if(row < gridSize - 1 && tablero [row + 1][col].hasNoImage()) {
+			fichaClick.intercambiar(tablero[row + 1][col]);
+		} else if (col > 0 && tablero[row][col - 1].hasNoImage()){
+			fichaClick.intercambiar(tablero[row][col - 1]);
+		} else if (col < gridSize - 1 && tablero[row][col + 1].hasNoImage()) {
+			fichaClick.intercambiar(tablero[row][col + 1]);
+		}
+		
+		if (validarOrden()) {
+			tablero[gridSize - 1][gridSize - 1].mostrarImagen();
+		}
+	}
 	
-	private class Escuchas implements ActionListener{
+	private void revolverFichas() {
+		int initRow = gridSize - 1;
+		int initCol = gridSize - 1;
+		
+		Random random = new Random();
+		
+		for (int c = 0; c < 10 * gridSize * gridSize; c++) {
+			int direction = random.nextInt(4);
+			
+			switch(direction) {
+			case 0://arriba
+				if (initRow > 0) {
+					tablero[initRow][initCol].intercambiar(tablero[initRow - 1][initCol]);
+					initRow --;
+				}
+				break;
+			case 1://abajo
+				if (initRow < gridSize - 1) {
+					tablero[initRow][initCol].intercambiar(tablero[initRow + 1][initCol]);
+					initRow ++;
+				}
+				break;
+			case 2://izquierda
+				if (initCol > 0) {
+					tablero[initRow][initCol].intercambiar(tablero[initRow][initCol - 1]);
+					initCol --;
+				}
+				break;
+			case 3://derecha
+				if (initCol < gridSize - 1) {
+					tablero[initRow][initCol].intercambiar(tablero[initRow][initCol + 1]);
+					initCol ++;
+				}
+				break;
+			}
+		}
+	}
+	
+	
+	private boolean validarOrden() {
+		int id = 0;
+		
+		for (int row = 0; row < gridSize; row ++) {
+			for (int col = 0; col < gridSize; col ++) {
+				if (tablero[row][col].getIdImage() == id) {
+					id ++;
+				} else {
+					return false;
+				}
+			}
+		}
+		return true;
+	}
+	
+	
+	private class Escuchas extends MouseAdapter implements ActionListener{
 
 		@Override
 		public void actionPerformed(ActionEvent eventAction) {
@@ -100,11 +200,22 @@ public class Rompecocos extends JFrame {
 				System.exit(0);
 			} else if (eventAction.getSource() == ayuda) {
 				//Llamar a la ventana ayuda
+				ventanaAyuda.setVisible(true);
+				miMisma.setEnabled(false);
 			} else {
 				//Llamar a revolver fichas
+				revolverFichas();
 			}
 		}
 		
+		@Override
+		public void mouseClicked (MouseEvent eventMouse) {
+			//TODO Auto-generated method stub
+			//Intercambiar fichas
+			Ficha fichaClick = (Ficha)eventMouse.getSource();
+			clickedFicha(fichaClick);
+		}
+		  
 	}
 	
 }
